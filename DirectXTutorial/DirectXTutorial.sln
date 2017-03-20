@@ -5,6 +5,8 @@ VisualStudioVersion = 12.0.40629.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DirectXTutorial", "DirectXTutorial\DirectXTutorial.vcxproj", "{0162198B-500F-432F-BF04-CF9309288260}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GDIDemoCore", "GDIDemoCore\GDIDemoCore.vcxproj", "{C9B7EEE3-1A3F-4A2A-A7F5-7D53CF9D4FE2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -15,6 +17,10 @@ Global
 		{0162198B-500F-432F-BF04-CF9309288260}.Debug|Win32.Build.0 = Debug|Win32
 		{0162198B-500F-432F-BF04-CF9309288260}.Release|Win32.ActiveCfg = Release|Win32
 		{0162198B-500F-432F-BF04-CF9309288260}.Release|Win32.Build.0 = Release|Win32
+		{C9B7EEE3-1A3F-4A2A-A7F5-7D53CF9D4FE2}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C9B7EEE3-1A3F-4A2A-A7F5-7D53CF9D4FE2}.Debug|Win32.Build.0 = Debug|Win32
+		{C9B7EEE3-1A3F-4A2A-A7F5-7D53CF9D4FE2}.Release|Win32.ActiveCfg = Release|Win32
+		{C9B7EEE3-1A3F-4A2A-A7F5-7D53CF9D4FE2}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

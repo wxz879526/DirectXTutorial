@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DirectXTutorial", "DirectXT
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GDIDemoCore", "GDIDemoCore\GDIDemoCore.vcxproj", "{C9B7EEE3-1A3F-4A2A-A7F5-7D53CF9D4FE2}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GDIdemo4", "GDIdemo4\GDIdemo4.vcxproj", "{A074A9D3-4F4D-4EBA-BE01-EFE36D13F607}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -21,6 +23,10 @@ Global
 		{C9B7EEE3-1A3F-4A2A-A7F5-7D53CF9D4FE2}.Debug|Win32.Build.0 = Debug|Win32
 		{C9B7EEE3-1A3F-4A2A-A7F5-7D53CF9D4FE2}.Release|Win32.ActiveCfg = Release|Win32
 		{C9B7EEE3-1A3F-4A2A-A7F5-7D53CF9D4FE2}.Release|Win32.Build.0 = Release|Win32
+		{A074A9D3-4F4D-4EBA-BE01-EFE36D13F607}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A074A9D3-4F4D-4EBA-BE01-EFE36D13F607}.Debug|Win32.Build.0 = Debug|Win32
+		{A074A9D3-4F4D-4EBA-BE01-EFE36D13F607}.Release|Win32.ActiveCfg = Release|Win32
+		{A074A9D3-4F4D-4EBA-BE01-EFE36D13F607}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

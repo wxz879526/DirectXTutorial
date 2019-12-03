@@ -86,7 +86,10 @@ void initD3D(HWND hWnd)
 
 void render_frame()
 {
+	//ÀàËÆ»­±³¾°
 	d3ddevice->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0, 40, 100), 1.0f, 0);
+
+	//ÀàËÆ»­Ç°¾°ÄÚÈÝ
 	d3ddevice->BeginScene();
 
 	d3ddevice->EndScene();

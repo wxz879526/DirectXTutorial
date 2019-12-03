@@ -7,8 +7,8 @@
 
 #pragma comment(lib, "winmm.lib")
 
-#define WINDOW_WIDTH 800
-#define WINDOW_HEIGHT 600
+#define WINDOW_WIDTH 1920
+#define WINDOW_HEIGHT 1080
 
 #define WINDOW_TITLE L"程序核心框架"
 #define WINDOW_CLASS_NAME L"My_CLASS"
@@ -34,7 +34,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	wndClass.hInstance = hInstance;
 	//wndClass.hIcon = (HICON)::LoadImage(NULL, _T("icon.ico"), IMAGE_ICON, 0, 0, LR_DEFAULTSIZE | LR_LOADFROMFILE);
 	wndClass.hCursor = ::LoadCursor(NULL, IDC_ARROW);
-	wndClass.hbrBackground = (HBRUSH)COLOR_WINDOW;
+	//wndClass.hbrBackground = (HBRUSH)COLOR_WINDOW;
 	wndClass.lpszMenuName = NULL;
 	wndClass.lpszClassName = WINDOW_CLASS_NAME;
 
@@ -43,7 +43,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return -1;
 	}
 
-	hWnd = CreateWindowEx(0, WINDOW_CLASS_NAME, WINDOW_TITLE, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, WINDOW_WIDTH, WINDOW_HEIGHT, NULL, NULL, hInstance, NULL);
+	hWnd = CreateWindowEx(0, 
+		WINDOW_CLASS_NAME, 
+		WINDOW_TITLE, 
+		WS_POPUP, 
+		0, 0, 
+		WINDOW_WIDTH, WINDOW_HEIGHT, 
+		NULL, NULL, hInstance, NULL);
 	//MoveWindow(hWnd, 250, 250, WINDOW_WIDTH, WINDOW_HEIGHT, TRUE);
 
 	ShowWindow(hWnd, iCmdShow);
@@ -78,9 +84,17 @@ void initD3D(HWND hWnd)
 	D3DPRESENT_PARAMETERS d3dpp;
 	ZeroMemory(&d3dpp, sizeof(d3dpp));
 	d3dpp.hDeviceWindow = hWnd;
-	d3dpp.Windowed = TRUE;
+	d3dpp.Windowed = FALSE;
 	d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
-	d3d->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp,
+	d3dpp.BackBufferFormat = D3DFMT_X8R8G8B8;
+	d3dpp.BackBufferWidth = WINDOW_WIDTH;
+	d3dpp.BackBufferHeight = WINDOW_HEIGHT;
+
+	d3d->CreateDevice(D3DADAPTER_DEFAULT,  //使用默认图形卡
+		D3DDEVTYPE_HAL, //使用硬件处理渲染
+		hWnd, 
+		D3DCREATE_SOFTWARE_VERTEXPROCESSING, 
+		&d3dpp,
 		&d3ddevice);
 }
 
@@ -90,7 +104,7 @@ void render_frame()
 	d3ddevice->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0, 40, 100), 1.0f, 0);
 
 	//类似画前景内容
-	d3ddevice->BeginScene();
+	d3ddevice->BeginScene(); //锁住显卡的内存
 
 	d3ddevice->EndScene();
 	d3ddevice->Present(NULL, NULL, NULL, NULL);

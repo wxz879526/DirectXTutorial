@@ -15,10 +15,20 @@
 
 LPDIRECT3D9 d3d;
 LPDIRECT3DDEVICE9 d3ddevice;
+LPDIRECT3DVERTEXBUFFER9 v_buffer;
 
 void initD3D(HWND hWnd); // sets up and initializes Direct3D
+void initGraphics();
 void render_frame();    // renders a single frame
 void cleanD3D();       // closes Direct3D and releases memory
+
+struct CUSTOMVERTEX
+{
+	float x, y, z, rhw;
+	DWORD color;
+};
+
+#define CUSTOMFVF (D3DFVF_XYZRHW | D3DFVF_DIFFUSE)
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam);
 
@@ -96,15 +106,37 @@ void initD3D(HWND hWnd)
 		D3DCREATE_SOFTWARE_VERTEXPROCESSING, 
 		&d3dpp,
 		&d3ddevice);
+
+	initGraphics();
+}
+
+void initGraphics()
+{
+	CUSTOMVERTEX vertices[] = {
+		{400.0f, 62.5f, 0.5f, 1.0f, D3DCOLOR_XRGB(0,0,255)},
+		{650.0f, 500.0f, 0.5f, 1.0f, D3DCOLOR_XRGB(0,255,0)},
+		{150.0f, 500.0f, 0.5f, 1.0f, D3DCOLOR_XRGB(255,0,0)}
+	};
+
+	d3ddevice->CreateVertexBuffer(3 * sizeof(CUSTOMVERTEX),
+		0, CUSTOMFVF, D3DPOOL_MANAGED, &v_buffer, nullptr);
+	VOID *pData;
+	v_buffer->Lock(0, 0, &pData, 0);
+	memcpy(pData, vertices, sizeof(vertices));
+	v_buffer->Unlock();
 }
 
 void render_frame()
 {
 	//ÀàËÆ»­±³¾°
-	d3ddevice->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0, 40, 100), 1.0f, 0);
+	d3ddevice->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0, 0, 0), 1.0f, 0);
 
 	//ÀàËÆ»­Ç°¾°ÄÚÈÝ
 	d3ddevice->BeginScene(); //Ëø×¡ÏÔ¿¨µÄÄÚ´æ
+
+	d3ddevice->SetFVF(CUSTOMFVF);
+	d3ddevice->SetStreamSource(0, v_buffer, 0, sizeof(CUSTOMVERTEX));
+	d3ddevice->DrawPrimitive(D3DPT_TRIANGLELIST, 0, 1);
 
 	d3ddevice->EndScene();
 	d3ddevice->Present(NULL, NULL, NULL, NULL);
@@ -112,6 +144,7 @@ void render_frame()
 
 void cleanD3D()
 {
+	v_buffer->Release();
 	d3ddevice->Release();
 	d3d->Release();
 }

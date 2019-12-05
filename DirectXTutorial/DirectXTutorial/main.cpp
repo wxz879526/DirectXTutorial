@@ -103,6 +103,8 @@ void initD3D(HWND hWnd)
 	d3dpp.BackBufferFormat = D3DFMT_X8R8G8B8;
 	d3dpp.BackBufferWidth = WINDOW_WIDTH;
 	d3dpp.BackBufferHeight = WINDOW_HEIGHT;
+	d3dpp.EnableAutoDepthStencil = TRUE;
+	d3dpp.AutoDepthStencilFormat = D3DFMT_D16;
 
 	d3d->CreateDevice(D3DADAPTER_DEFAULT,  //使用默认图形卡
 		D3DDEVTYPE_HAL, //使用硬件处理渲染
@@ -111,6 +113,8 @@ void initD3D(HWND hWnd)
 		&d3dpp,
 		&d3ddevice);
 	d3ddevice->SetRenderState(D3DRS_LIGHTING, FALSE);
+	d3ddevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
+	d3ddevice->SetRenderState(D3DRS_ZENABLE, TRUE);
 
 	initGraphics();
 }
@@ -118,9 +122,9 @@ void initD3D(HWND hWnd)
 void initGraphics()
 {
 	CUSTOMVERTEX vertices[] = {
-		{2.5f, -3.0f, 0.0f, D3DCOLOR_XRGB(0,0,255)},
+		{3.0f, -3.0f, 0.0f, D3DCOLOR_XRGB(0,0,255)},
 		{0.0f, 3.0f, 0.0f, D3DCOLOR_XRGB(0,255,0)},
-		{-2.5f, -3.0f, 0.0f, D3DCOLOR_XRGB(255,0,0)}
+		{-3.0f, -3.0f, 0.0f, D3DCOLOR_XRGB(255,0,0)}
 	};
 
 	d3ddevice->CreateVertexBuffer(3 * sizeof(CUSTOMVERTEX),
@@ -135,26 +139,16 @@ void render_frame()
 {
 	//类似画背景
 	d3ddevice->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0, 0, 0), 1.0f, 0);
+	d3ddevice->Clear(0, NULL, D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0), 0.0f, 0);
 
 	//类似画前景内容
 	d3ddevice->BeginScene(); //锁住显卡的内存
 
 	d3ddevice->SetFVF(CUSTOMFVF);
 
-	static float v_space = 0.0f;
-	v_space += 0.1f;
-	D3DXMATRIX matTranslate;
-	D3DXMatrixTranslation(&matTranslate, 0.0f, v_space, 0);
-
-	D3DXMATRIX matRotateY;
-	static float index = 0.0f;
-	index += 0.05f;
-	D3DXMatrixRotationY(&matRotateY, index);
-	d3ddevice->SetTransform(D3DTS_WORLD, &matRotateY);
-
 	D3DXMATRIX matView;
 	D3DXMatrixLookAtLH(&matView, 
-		&D3DXVECTOR3(0.0f, 0.0f, 10.0f),
+		&D3DXVECTOR3(0.0f, 0.0f, 15.0f),
 		&D3DXVECTOR3(0.0f, 0.0f, 0.0f),
 		&D3DXVECTOR3(0.0f, 1.0f, 0.0f));
 	d3ddevice->SetTransform(D3DTS_VIEW, &matView);
@@ -167,6 +161,19 @@ void render_frame()
 	d3ddevice->SetTransform(D3DTS_PROJECTION, &matProject);
 
 	d3ddevice->SetStreamSource(0, v_buffer, 0, sizeof(CUSTOMVERTEX));
+
+	D3DXMATRIX matTranslateA;
+	D3DXMATRIX matTranslateB;
+	D3DXMATRIX matRotateY;
+	static float index = 0.0f;
+	index += 0.05f;
+	D3DXMatrixTranslation(&matTranslateA, 0.0f, 0.0f, 2.0f);
+	D3DXMatrixTranslation(&matTranslateB, 0.0f, 0.0f, -2.0f);
+	D3DXMatrixRotationY(&matRotateY, index);
+	d3ddevice->SetTransform(D3DTS_WORLD, &(matTranslateA*matRotateY));
+	d3ddevice->DrawPrimitive(D3DPT_TRIANGLELIST, 0, 1);
+
+	d3ddevice->SetTransform(D3DTS_WORLD, &(matTranslateB*matRotateY));
 	d3ddevice->DrawPrimitive(D3DPT_TRIANGLELIST, 0, 1);
 
 	d3ddevice->EndScene();

@@ -3,7 +3,11 @@
 #include <atldbcli.h>
 #include <playsoundapi.h>
 #include <d3d9.h>
+#include <D3dx9math.h>
+
 #pragma comment(lib, "d3d9.lib")
+#pragma comment(lib, "d3dx9d.lib")
+
 
 #pragma comment(lib, "winmm.lib")
 
@@ -24,11 +28,11 @@ void cleanD3D();       // closes Direct3D and releases memory
 
 struct CUSTOMVERTEX
 {
-	float x, y, z, rhw;
+	float x, y, z;
 	DWORD color;
 };
 
-#define CUSTOMFVF (D3DFVF_XYZRHW | D3DFVF_DIFFUSE)
+#define CUSTOMFVF (D3DFVF_XYZ | D3DFVF_DIFFUSE)
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam);
 
@@ -106,6 +110,7 @@ void initD3D(HWND hWnd)
 		D3DCREATE_SOFTWARE_VERTEXPROCESSING, 
 		&d3dpp,
 		&d3ddevice);
+	d3ddevice->SetRenderState(D3DRS_LIGHTING, FALSE);
 
 	initGraphics();
 }
@@ -113,9 +118,9 @@ void initD3D(HWND hWnd)
 void initGraphics()
 {
 	CUSTOMVERTEX vertices[] = {
-		{400.0f, 62.5f, 0.5f, 1.0f, D3DCOLOR_XRGB(0,0,255)},
-		{650.0f, 500.0f, 0.5f, 1.0f, D3DCOLOR_XRGB(0,255,0)},
-		{150.0f, 500.0f, 0.5f, 1.0f, D3DCOLOR_XRGB(255,0,0)}
+		{2.5f, -3.0f, 0.0f, D3DCOLOR_XRGB(0,0,255)},
+		{0.0f, 3.0f, 0.0f, D3DCOLOR_XRGB(0,255,0)},
+		{-2.5f, -3.0f, 0.0f, D3DCOLOR_XRGB(255,0,0)}
 	};
 
 	d3ddevice->CreateVertexBuffer(3 * sizeof(CUSTOMVERTEX),
@@ -135,6 +140,32 @@ void render_frame()
 	d3ddevice->BeginScene(); //Ëø×¡ÏÔ¿¨µÄÄÚ´æ
 
 	d3ddevice->SetFVF(CUSTOMFVF);
+
+	static float v_space = 0.0f;
+	v_space += 0.1f;
+	D3DXMATRIX matTranslate;
+	D3DXMatrixTranslation(&matTranslate, 0.0f, v_space, 0);
+
+	D3DXMATRIX matRotateY;
+	static float index = 0.0f;
+	index += 0.05f;
+	D3DXMatrixRotationY(&matRotateY, index);
+	d3ddevice->SetTransform(D3DTS_WORLD, &matRotateY);
+
+	D3DXMATRIX matView;
+	D3DXMatrixLookAtLH(&matView, 
+		&D3DXVECTOR3(0.0f, 0.0f, 10.0f),
+		&D3DXVECTOR3(0.0f, 0.0f, 0.0f),
+		&D3DXVECTOR3(0.0f, 1.0f, 0.0f));
+	d3ddevice->SetTransform(D3DTS_VIEW, &matView);
+
+	D3DXMATRIX matProject;
+	D3DXMatrixPerspectiveFovLH(&matProject,
+		D3DXToRadian(45),
+		(FLOAT)WINDOW_WIDTH / (FLOAT)WINDOW_HEIGHT,
+		1.0f, 100.0f);
+	d3ddevice->SetTransform(D3DTS_PROJECTION, &matProject);
+
 	d3ddevice->SetStreamSource(0, v_buffer, 0, sizeof(CUSTOMVERTEX));
 	d3ddevice->DrawPrimitive(D3DPT_TRIANGLELIST, 0, 1);
 

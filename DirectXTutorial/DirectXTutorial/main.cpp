@@ -25,9 +25,10 @@ void initD3D(HWND hWnd);    // sets up and initializes Direct3D
 void render_frame(void);    // renders a single frame
 void cleanD3D(void);    // closes Direct3D and releases memory
 void init_graphics(void);    // 3D declarations
+void init_light();
 
-struct CUSTOMVERTEX { FLOAT X, Y, Z; DWORD COLOR; };
-#define CUSTOMFVF (D3DFVF_XYZ | D3DFVF_DIFFUSE)
+struct CUSTOMVERTEX { FLOAT X, Y, Z; D3DVECTOR NORMAL; };
+#define CUSTOMFVF (D3DFVF_XYZ | D3DFVF_NORMAL)
 
 // the WindowProc function prototype
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -129,12 +130,30 @@ void initD3D(HWND hWnd)
 		&d3ddev);
 
 	init_graphics();    // call the function to initialize the triangle
+	init_light();
 
-	d3ddev->SetRenderState(D3DRS_LIGHTING, FALSE);    // turn off the 3D lighting
-	d3ddev->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);    // both sides of the triangles
+	d3ddev->SetRenderState(D3DRS_LIGHTING, TRUE);    // turn off the 3D lighting
+	d3ddev->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE); // both sides of the triangles
 	d3ddev->SetRenderState(D3DRS_ZENABLE, TRUE);    // turn on the z-buffer
+	d3ddev->SetRenderState(D3DRS_AMBIENT, D3DCOLOR_XRGB(50, 50, 50));
 }
 
+void init_light()
+{
+	D3DLIGHT9 light;
+	ZeroMemory(&light, sizeof(light));
+	light.Type = D3DLIGHT_DIRECTIONAL;
+	light.Diffuse = D3DXCOLOR(0.5f, 0.5f, 0.5f, 1.0f);
+	light.Direction = D3DXVECTOR3(-1.0f, -0.3f, -1.0f);
+	d3ddev->SetLight(0, &light);
+	d3ddev->LightEnable(0, TRUE);
+
+	D3DMATERIAL9 material;
+	ZeroMemory(&material, sizeof(material));
+	material.Diffuse = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
+	material.Ambient = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
+	d3ddev->SetMaterial(&material);
+}
 
 // this is the function used to render a single frame
 void render_frame(void)
@@ -147,49 +166,30 @@ void render_frame(void)
 	// select which vertex format we are using
 	d3ddev->SetFVF(CUSTOMFVF);
 
-	// set the view transform
-	D3DXMATRIX matView;    // the view transform matrix
-	D3DXMatrixLookAtLH(&matView,
-		&D3DXVECTOR3(0.0f, 0.0f, 25.0f),   // the camera position
-		&D3DXVECTOR3(0.0f, 0.0f, 0.0f),    // the look-at position
-		&D3DXVECTOR3(0.0f, 1.0f, 0.0f));    // the up direction
-	d3ddev->SetTransform(D3DTS_VIEW, &matView);    // set the view transform to matView
+	D3DXMATRIX matView;
+	D3DXMatrixLookAtLH(&matView, 
+		&D3DXVECTOR3(0.0f, 8.0f, 25.0f), 
+		&D3DXVECTOR3(0.0f, 0.0f, 0.0f), 
+		&D3DXVECTOR3(0.0f, 1.0f, 0.0f));
+	d3ddev->SetTransform(D3DTS_VIEW, &matView);
 
-	// set the projection transform
-	D3DXMATRIX matProjection;    // the projection transform matrix
-	D3DXMatrixPerspectiveFovLH(&matProjection,
-		D3DXToRadian(45),    // the horizontal field of view
-		(FLOAT)SCREEN_WIDTH / (FLOAT)SCREEN_HEIGHT, // aspect ratio
-		1.0f,		// the near view-plane
-		100.0f);   // the far view-plane
-	d3ddev->SetTransform(D3DTS_PROJECTION, &matProjection);     //set the projection
+	D3DXMATRIX matProject;
+	D3DXMatrixPerspectiveFovLH(&matProject,
+		D3DXToRadian(45),
+		(FLOAT)SCREEN_WIDTH/(FLOAT)SCREEN_HEIGHT,
+		1.0f, 100.0f);
+	d3ddev->SetTransform(D3DTS_PROJECTION, &matProject);
 
-	// select the vertex buffer to display
+	static float index = 0.0f;
+	//index += 0.03f;
+	D3DXMATRIX matRotateY;
+	D3DXMatrixRotationY(&matRotateY, index);
+	d3ddev->SetTransform(D3DTS_WORLD, &matRotateY);
+
 	d3ddev->SetStreamSource(0, v_buffer, 0, sizeof(CUSTOMVERTEX));
 	d3ddev->SetIndices(i_buffer);
 
-	// draw the cube
-	d3ddev->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 8, 0, 12);
-
-
-	D3DXMATRIX matTranslateA;    // a matrix to store the translation for triangle A
-	D3DXMATRIX matTranslateB;    // a matrix to store the translation for triangle B
-	D3DXMATRIX matRotateY;    // a matrix to store the rotation for each triangle
-	static float index = 0.0f; index += 0.03f; // an ever-increasing float value
-
-	static float z_index = 0.0f;
-	z_index += 0.03f;
-	// build MULTIPLE matrices to translate the model and one to rotate
-	D3DXMatrixTranslation(&matTranslateA, z_index, 0.0f, 0.0f);
-	D3DXMatrixTranslation(&matTranslateB, 0.0f, 0.0f, -2.0f);
-	D3DXMatrixRotationY(&matRotateY, index);    // the front side
-
-	// tell Direct3D about each world transform, and then draw another triangle
-	d3ddev->SetTransform(D3DTS_WORLD, &(matTranslateA));
-	//d3ddev->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-
-	//d3ddev->SetTransform(D3DTS_WORLD, &(matTranslateB * matRotateY));
-	//d3ddev->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	d3ddev->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 24, 0, 12);
 
 	d3ddev->EndScene();
 	d3ddev->Present(NULL, NULL, NULL, NULL);
@@ -212,18 +212,39 @@ void init_graphics(void)
 	// create the vertices using the CUSTOMVERTEX struct
 	CUSTOMVERTEX vertices[] =
 	{
-		{ -3.0f, 3.0f, -3.0f, D3DCOLOR_XRGB(0, 0, 255), },
-		{ 3.0f, 3.0f, -3.0f, D3DCOLOR_XRGB(0, 255, 0), },
-		{ -3.0f, -3.0f, -3.0f, D3DCOLOR_XRGB(255, 0, 0), },
-		{ 3.0f, -3.0f, -3.0f, D3DCOLOR_XRGB(0, 255, 255), },
-		{ -3.0f, 3.0f, 3.0f, D3DCOLOR_XRGB(0, 0, 255), },
-		{ 3.0f, 3.0f, 3.0f, D3DCOLOR_XRGB(255, 0, 0), },
-		{ -3.0f, -3.0f, 3.0f, D3DCOLOR_XRGB(0, 255, 0), },
-		{ 3.0f, -3.0f, 3.0f, D3DCOLOR_XRGB(0, 255, 255), },
+		{ -3.0f, 3.0f, 3.0f,  0.0f, 0.0f, 1.0f}, //后侧面
+		{ 3.0f, 3.0f, 3.0f, 0.0f, 0.0f, 1.0f},
+		{ -3.0f, -3.0f, 3.0f, 0.0f, 0.0f, 1.0f},
+		{ 3.0f, -3.0f, 3.0f, 0.0f, 0.0f, 1.0f},
+
+		{ -3.0f, 3.0f, -3.0f,  0.0f, 0.0f, -1.0f}, //前侧面
+		{ 3.0f, 3.0f, -3.0f, 0.0f, 0.0f, -1.0f},
+		{ -3.0f, -3.0f, -3.0f, 0.0f, 0.0f, -1.0f},
+		{ 3.0f, -3.0f, -3.0f, 0.0f, 0.0f, -1.0f},
+
+		{ -3.0f, 3.0f, -3.0f,  -1.0f, 0.0f, 0.0f}, //左侧面
+		{ -3.0f, 3.0f, 3.0f, -1.0f, 0.0f, 0.0f},
+		{ -3.0f, -3.0f, 3.0f, -1.0f, 0.0f, 0.0f},
+		{ -3.0f, -3.0f, -3.0f, -1.0f, 0.0f, 0.0f},
+
+		{ 3.0f, 3.0f, -3.0f,  1.0f, 0.0f, 0.0f}, //右侧面
+		{ 3.0f, 3.0f, 3.0f, 1.0f, 0.0f, 0.0f},
+		{ 3.0f, -3.0f, -3.0f, 1.0f, 0.0f, 0.0f},
+		{ 3.0f, -3.0f, 3.0f, 1.0f, 0.0f, 0.0f},
+
+		{ -3.0f, 3.0f, -3.0f,  0.0f, 1.0f, 0.0f}, //上侧面
+		{ 3.0f, 3.0f, -3.0f, 0.0f, 1.0f, 0.0f},
+		{ -3.0f, 3.0f, 3.0f, 0.0f, 1.0f, 0.0f},
+		{ 3.0f, 3.0f, 3.0f, 0.0f, 1.0f, 0.0f},
+
+		{ -3.0f, -3.0f, -3.0f,  0.0f, -1.0f, 0.0f}, //下侧面
+		{ 3.0f, -3.0f, -3.0f, 0.0f, -1.0f, 0.0f},
+		{ -3.0f, -3.0f, 3.0f, 0.0f, -1.0f, 0.0f},
+		{ 3.0f, -3.0f, 3.0f, 0.0f, -1.0f, 0.0f},
 	};
 
 	// create a vertex buffer interface called v_buffer
-	d3ddev->CreateVertexBuffer(8 * sizeof(CUSTOMVERTEX),
+	d3ddev->CreateVertexBuffer(24 * sizeof(CUSTOMVERTEX),
 		0,
 		CUSTOMFVF,
 		D3DPOOL_MANAGED,
@@ -243,14 +264,14 @@ void init_graphics(void)
 		0, 1, 2,    // side 1
 		2, 1, 3,
 
-		2, 0, 6,    // side 2
-		6, 0, 4,
-
-		4, 5, 6,    // side 3
+		4, 5, 6,    // side 2
 		6, 5, 7,
+
+		4, 0, 6,    // side 3
+		6, 0, 2,
 		
-		1, 5, 3,    // side 4
-		3, 5, 7,
+		7, 5, 3,    // side 4
+		3, 5, 1,
 
 		4, 0, 5,    // side 5
 		5, 0, 1,

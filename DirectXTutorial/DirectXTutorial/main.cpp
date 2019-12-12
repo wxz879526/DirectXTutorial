@@ -17,6 +17,7 @@ LPDIRECT3D9 d3d;    // the pointer to our Direct3D interface
 LPDIRECT3DDEVICE9 d3ddev;    // the pointer to the device class
 LPDIRECT3DVERTEXBUFFER9 v_buffer = NULL;    // the pointer to the vertex buffer
 LPDIRECT3DINDEXBUFFER9 i_buffer = NULL;  // create index buffer
+LPDIRECT3DTEXTURE9 texture = nullptr;
 
 
 
@@ -27,8 +28,8 @@ void cleanD3D(void);    // closes Direct3D and releases memory
 void init_graphics(void);    // 3D declarations
 void init_light();
 
-struct CUSTOMVERTEX { FLOAT X, Y, Z; D3DVECTOR NORMAL; };
-#define CUSTOMFVF (D3DFVF_XYZ | D3DFVF_NORMAL)
+struct CUSTOMVERTEX { FLOAT X, Y, Z; D3DVECTOR NORMAL; FLOAT U, V; };
+#define CUSTOMFVF (D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_TEX1)
 
 // the WindowProc function prototype
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -181,13 +182,15 @@ void render_frame(void)
 	d3ddev->SetTransform(D3DTS_PROJECTION, &matProject);
 
 	static float index = 0.0f;
-	//index += 0.03f;
+	index += 0.03f;
 	D3DXMATRIX matRotateY;
 	D3DXMatrixRotationY(&matRotateY, index);
 	d3ddev->SetTransform(D3DTS_WORLD, &matRotateY);
 
 	d3ddev->SetStreamSource(0, v_buffer, 0, sizeof(CUSTOMVERTEX));
 	d3ddev->SetIndices(i_buffer);
+
+	d3ddev->SetTexture(0, texture);
 
 	d3ddev->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 24, 0, 12);
 
@@ -199,6 +202,7 @@ void render_frame(void)
 // this is the function that cleans up Direct3D and COM
 void cleanD3D(void)
 {
+	texture->Release();
 	v_buffer->Release();    // close and release the vertex buffer
 	d3ddev->Release();    // close and release the 3D device
 	d3d->Release();    // close and release Direct3D
@@ -209,38 +213,40 @@ void cleanD3D(void)
 // this is the function that puts the 3D models into video RAM
 void init_graphics(void)
 {
+	D3DXCreateTextureFromFile(d3ddev, L"wood.png", &texture);
+
 	// create the vertices using the CUSTOMVERTEX struct
 	CUSTOMVERTEX vertices[] =
 	{
-		{ -3.0f, 3.0f, 3.0f,  0.0f, 0.0f, 1.0f}, //后侧面
-		{ 3.0f, 3.0f, 3.0f, 0.0f, 0.0f, 1.0f},
-		{ -3.0f, -3.0f, 3.0f, 0.0f, 0.0f, 1.0f},
-		{ 3.0f, -3.0f, 3.0f, 0.0f, 0.0f, 1.0f},
+		{ -3.0f, -3.0f, 3.0f,  0.0f, 0.0f, 1.0f,  0.0f, 0.0f, },    // side 1
+		{ 3.0f, -3.0f, 3.0f,  0.0f, 0.0f, 1.0f,  1.0f, 0.0f, },
+		{ -3.0f, 3.0f, 3.0f,  0.0f, 0.0f, 1.0f,  0.0f, 1.0f, },
+		{ 3.0f, 3.0f, 3.0f,  0.0f, 0.0f, 1.0f,  1.0f, 1.0f, },
 
-		{ -3.0f, 3.0f, -3.0f,  0.0f, 0.0f, -1.0f}, //前侧面
-		{ 3.0f, 3.0f, -3.0f, 0.0f, 0.0f, -1.0f},
-		{ -3.0f, -3.0f, -3.0f, 0.0f, 0.0f, -1.0f},
-		{ 3.0f, -3.0f, -3.0f, 0.0f, 0.0f, -1.0f},
+		{ -3.0f, -3.0f, -3.0f,  0.0f, 0.0f, -1.0f,  0.0f, 0.0f, },    // side 2
+		{ -3.0f, 3.0f, -3.0f,  0.0f, 0.0f, -1.0f,  0.0f, 1.0f, },
+		{ 3.0f, -3.0f, -3.0f,  0.0f, 0.0f, -1.0f,  1.0f, 0.0f, },
+		{ 3.0f, 3.0f, -3.0f,  0.0f, 0.0f, -1.0f,  1.0f, 1.0f, },
 
-		{ -3.0f, 3.0f, -3.0f,  -1.0f, 0.0f, 0.0f}, //左侧面
-		{ -3.0f, 3.0f, 3.0f, -1.0f, 0.0f, 0.0f},
-		{ -3.0f, -3.0f, 3.0f, -1.0f, 0.0f, 0.0f},
-		{ -3.0f, -3.0f, -3.0f, -1.0f, 0.0f, 0.0f},
+		{ -3.0f, 3.0f, -3.0f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f, },    // side 3
+		{ -3.0f, 3.0f, 3.0f,  0.0f, 1.0f, 0.0f,  0.0f, 1.0f, },
+		{ 3.0f, 3.0f, -3.0f,  0.0f, 1.0f, 0.0f,  1.0f, 0.0f, },
+		{ 3.0f, 3.0f, 3.0f,  0.0f, 1.0f, 0.0f,  1.0f, 1.0f, },
 
-		{ 3.0f, 3.0f, -3.0f,  1.0f, 0.0f, 0.0f}, //右侧面
-		{ 3.0f, 3.0f, 3.0f, 1.0f, 0.0f, 0.0f},
-		{ 3.0f, -3.0f, -3.0f, 1.0f, 0.0f, 0.0f},
-		{ 3.0f, -3.0f, 3.0f, 1.0f, 0.0f, 0.0f},
+		{ -3.0f, -3.0f, -3.0f,  0.0f, -1.0f, 0.0f,  0.0f, 0.0f, },    // side 4
+		{ 3.0f, -3.0f, -3.0f,  0.0f, -1.0f, 0.0f,  1.0f, 0.0f, },
+		{ -3.0f, -3.0f, 3.0f,  0.0f, -1.0f, 0.0f,  0.0f, 1.0f, },
+		{ 3.0f, -3.0f, 3.0f,  0.0f, -1.0f, 0.0f,  1.0f, 1.0f, },
 
-		{ -3.0f, 3.0f, -3.0f,  0.0f, 1.0f, 0.0f}, //上侧面
-		{ 3.0f, 3.0f, -3.0f, 0.0f, 1.0f, 0.0f},
-		{ -3.0f, 3.0f, 3.0f, 0.0f, 1.0f, 0.0f},
-		{ 3.0f, 3.0f, 3.0f, 0.0f, 1.0f, 0.0f},
+		{ 3.0f, -3.0f, -3.0f,  1.0f, 0.0f, 0.0f,  0.0f, 0.0f, },    // side 5
+		{ 3.0f, 3.0f, -3.0f,  1.0f, 0.0f, 0.0f,  0.0f, 1.0f, },
+		{ 3.0f, -3.0f, 3.0f,  1.0f, 0.0f, 0.0f,  1.0f, 0.0f, },
+		{ 3.0f, 3.0f, 3.0f,  1.0f, 0.0f, 0.0f,  1.0f, 1.0f, },
 
-		{ -3.0f, -3.0f, -3.0f,  0.0f, -1.0f, 0.0f}, //下侧面
-		{ 3.0f, -3.0f, -3.0f, 0.0f, -1.0f, 0.0f},
-		{ -3.0f, -3.0f, 3.0f, 0.0f, -1.0f, 0.0f},
-		{ 3.0f, -3.0f, 3.0f, 0.0f, -1.0f, 0.0f},
+		{ -3.0f, -3.0f, -3.0f,  -1.0f, 0.0f, 0.0f,  0.0f, 0.0f, },    // side 6
+		{ -3.0f, -3.0f, 3.0f,  -1.0f, 0.0f, 0.0f,  1.0f, 0.0f, },
+		{ -3.0f, 3.0f, -3.0f,  -1.0f, 0.0f, 0.0f,  0.0f, 1.0f, },
+		{ -3.0f, 3.0f, 3.0f,  -1.0f, 0.0f, 0.0f,  1.0f, 1.0f, },
 	};
 
 	// create a vertex buffer interface called v_buffer
@@ -263,21 +269,16 @@ void init_graphics(void)
 	{
 		0, 1, 2,    // side 1
 		2, 1, 3,
-
 		4, 5, 6,    // side 2
 		6, 5, 7,
-
-		4, 0, 6,    // side 3
-		6, 0, 2,
-		
-		7, 5, 3,    // side 4
-		3, 5, 1,
-
-		4, 0, 5,    // side 5
-		5, 0, 1,
-
-		6, 2, 7,    // side 6
-		7, 2, 3,
+		8, 9, 10,    // side 3
+		10, 9, 11,
+		12, 13, 14,    // side 4
+		14, 13, 15,
+		16, 17, 18,    // side 5
+		18, 17, 19,
+		20, 21, 22,    // side 6
+		22, 21, 23,
 	};
 
 	// create an index buffer interface called i_buffer
